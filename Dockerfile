@@ -1,17 +1,15 @@
-# Используем официальный минимальный образ
+# Базовый образ
 FROM debian:bookworm-slim
 
-# Параметр для часового пояса
+# Параметры
 ARG TZ=Europe/Moscow
-
-# Окружение
 ENV TZ=${TZ} \
     DEBIAN_FRONTEND=noninteractive \
     LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8 \
     LANGUAGE=en_US:en
 
-# Установка пакетов и настройка
+# Установка нужных пакетов, timezone и локали
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       tzdata \
@@ -44,16 +42,23 @@ RUN apt-get update \
       expect \
  && ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
  && dpkg-reconfigure -f noninteractive tzdata \
- && update-locale LANG=${LANG} LC_ALL=${LC_ALL} LANGUAGE=${LANGUAGE} \
- && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/* \
+ \
+ # Запись переменных локали в /etc/default/locale,
+ # чтобы они учитывались системными утилитами
+ && { \
+      echo "LANG=${LANG}"; \
+      echo "LC_ALL=${LC_ALL}"; \
+      echo "LANGUAGE=${LANGUAGE}"; \
+    } > /etc/default/locale
 
-# Создаём пользователя, sudo без пароля
+# Создаём пользователя и настраиваем sudo без пароля
 RUN useradd -m -s /bin/bash user \
  && adduser user sudo \
  && echo 'user ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/90-user \
  && chmod 440 /etc/sudoers.d/90-user
 
-# Переход на непривилегированного пользователя
+# Переключаемся на непривилегированного пользователя
 USER user
 WORKDIR /home/user
 
