@@ -14,6 +14,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       tzdata \
       locales-all \
+      sudo \
       ca-certificates \
       debianutils \
       sed \
@@ -44,8 +45,7 @@ RUN apt-get update \
  && dpkg-reconfigure -f noninteractive tzdata \
  && rm -rf /var/lib/apt/lists/* \
  \
- # Запись переменных локали в /etc/default/locale,
- # чтобы они учитывались системными утилитами
+ # Запись переменных локали
  && { \
       echo "LANG=${LANG}"; \
       echo "LC_ALL=${LC_ALL}"; \
@@ -54,7 +54,7 @@ RUN apt-get update \
 
 # Создаём пользователя и настраиваем sudo без пароля
 RUN useradd -m -s /bin/bash user \
- && adduser user sudo \
+ && usermod -aG sudo user \
  && echo 'user ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/90-user \
  && chmod 440 /etc/sudoers.d/90-user
 
